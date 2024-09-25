@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Zulu JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: "zulu"
+          java-version: "17"
+      - name: Build and run tests
+        run: |
+          hostname
+          echo "host is $HOSTNAME"
+          ./gradlew clean test
+        env:
+          CONDUCTOR_SERVER_URL: ${{ secrets.CONDUCTOR_SERVER_URL }}
+          CONDUCTOR_SERVER_AUTH_KEY: ${{ secrets.CONDUCTOR_SERVER_AUTH_KEY }}
+          CONDUCTOR_SERVER_AUTH_SECRET: ${{ secrets.CONDUCTOR_SERVER_AUTH_SECRET }}
+          USER1_APPLICATION_ID: ${{ secrets.USER1_APPLICATION_ID }}
+          USER1_KEY_ID: ${{ secrets.USER1_KEY_ID }}
+          USER1_SECRET: ${{ secrets.USER1_SECRET }}
+          USER2_APPLICATION_ID: ${{ secrets.USER2_APPLICATION_ID }}
+          USER2_KEY_ID: ${{ secrets.USER2_KEY_ID }}
+          USER2_SECRET: ${{ secrets.USER2_SECRET }}
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: always() # always run even if the previous step fails
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
